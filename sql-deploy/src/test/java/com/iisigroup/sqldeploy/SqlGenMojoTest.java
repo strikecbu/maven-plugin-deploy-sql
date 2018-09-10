@@ -37,7 +37,7 @@ public class SqlGenMojoTest {
     /**
      * @throws Exception if any
      */
-    @Test
+//    @Test
     public void testSomething() throws Exception {
         File pom = new File( "target/test-classes/project-to-test/" );
         assertNotNull( pom );
@@ -62,8 +62,8 @@ public class SqlGenMojoTest {
     /**
      * Do not need the MojoRule.
      */
-    @WithoutMojo
-    @Test
+//    @WithoutMojo
+//    @Test
     public void testSomethingWhichDoesNotNeedTheMojoAndProbablyShouldBeExtractedIntoANewClassOfItsOwn() {
         assertTrue(true);
     }
