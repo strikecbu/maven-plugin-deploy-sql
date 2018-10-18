@@ -174,9 +174,10 @@ public class SqlFileProcessor {
      * @param allSqls all sql model in list
      * @param dayAfter 指定的日期之後的SQL
      * @param folder 產出目錄
+     * @param charset
      * @throws IOException
      */
-    public void createUpdateSql(List<SQL> allSqls, Date dayAfter, File folder) throws IOException {
+    public void createUpdateSql(List<SQL> allSqls, Date dayAfter, File folder, String charset) throws IOException {
         StringBuilder writeContent = this.getWriteContent(allSqls, dayAfter);
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd");
         String todayStr = dateFormat.format(new Date());
@@ -185,23 +186,26 @@ public class SqlFileProcessor {
         String fileName = fileFormat.replace("{yyyyMMdd}", todayStr);
         File deployFile = new File(folder, fileName);
 
-        this.writeFile(deployFile, writeContent.toString());
+        this.writeFile(deployFile, writeContent.toString(), charset);
         System.out.println("create deploy SQL was completed!");
     }
 
-    private void writeFile(File deployFile, String content) throws IOException {
+    private void writeFile(File deployFile, String content, String charset) throws IOException {
         if (deployFile.exists()) {
             deployFile.delete();
         } else {
             deployFile.createNewFile();
         }
 
+        if(charset == null || "".equals(charset))
+            charset = "UTF-8";
         try (
                 FileOutputStream fos = new FileOutputStream(deployFile);
-                OutputStreamWriter osw = new OutputStreamWriter(fos, "UTF-8");
+                OutputStreamWriter osw = new OutputStreamWriter(fos, charset);
                 BufferedWriter bw = new BufferedWriter(osw)
         ) {
             bw.write(content);
+            bw.flush();
         }
 
     }
@@ -233,9 +237,10 @@ public class SqlFileProcessor {
      * create init deploy sql
      * @param allSqls all sql model in list
      * @param folder 產出目錄
+     * @param charset
      * @throws IOException
      */
-    public void createInitSql(List<SQL> allSqls, File folder) throws IOException {
+    public void createInitSql(List<SQL> allSqls, File folder, String charset) throws IOException {
         StringBuilder content = new StringBuilder();
         for (SQL sql : allSqls) {
             String sqlFileName = sql.getSqlFileName();
@@ -245,7 +250,7 @@ public class SqlFileProcessor {
         }
         String fileName = "DeployUAT_Init.sql";
         File deployFile = new File(folder, fileName);
-        this.writeFile(deployFile, content.toString());
+        this.writeFile(deployFile, content.toString(), charset);
         System.out.println("create deploy init SQL was completed!");
     }
 

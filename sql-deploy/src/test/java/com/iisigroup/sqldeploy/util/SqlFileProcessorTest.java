@@ -28,7 +28,7 @@ public class SqlFileProcessorTest {
         }
 
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd");
-        sqlFileProcessor.createUpdateSql(sqlList, dateFormat.parse("20180821"), testDeployFolder);
+        sqlFileProcessor.createUpdateSql(sqlList, dateFormat.parse("20180821"), testDeployFolder, "UTF-8");
         String todayStr = dateFormat.format(new Date());
         String fileName = "DeployUAT" + todayStr + ".sql";
         File deployFile = new File(testDeployFolder, fileName);
@@ -36,7 +36,7 @@ public class SqlFileProcessorTest {
         Assert.assertTrue(deployFile.exists());
 
 
-        sqlFileProcessor.createInitSql(sqlList, testDeployFolder);
+        sqlFileProcessor.createInitSql(sqlList, testDeployFolder, "UTF-8");
         String initFileName = "DeployUAT_Init.sql";
         File deployInitFile = new File(testDeployFolder, initFileName);
         Assert.assertTrue(deployInitFile.exists());
