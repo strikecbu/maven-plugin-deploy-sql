@@ -7,13 +7,21 @@
 
   <groupId>com.iisigroup.sqldeploy</groupId>
   <artifactId>sql-deploy</artifactId>
-  <version>1.0.3-mvn3.2.1</version>
+  <version>1.1.0-mvn3.2.1</version>
   <packaging>maven-plugin</packaging>
 
   <name>sql-deploy Maven Plugin</name>
 
   <!-- FIXME change it to the project's website -->
   <url>http://www.example.com</url>
+  
+  <distributionManagement>
+    <repository>
+      <id>bolingcavalry-nexus-releases</id>
+      <name>Nexus Release Repository</name>
+      <url>http://sssrv01.iead.local:8081/nexus/content/repositories/releases</url>
+    </repository>
+  </distributionManagement>
 
   <prerequisites>
     <maven>${maven.version}</maven>
