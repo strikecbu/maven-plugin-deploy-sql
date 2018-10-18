@@ -48,6 +48,9 @@ public class SqlGenMojo extends AbstractMojo {
     @Parameter(defaultValue = "false", property = "initCreate")
     private boolean initCreate;
 
+    @Parameter(defaultValue = "UTF-8", property = "outputCharset")
+    private String outputCharset;
+
 
 
     public void execute() throws MojoExecutionException {
@@ -88,17 +91,16 @@ public class SqlGenMojo extends AbstractMojo {
         if(initCreate) {
             System.out.println("Ready to create deploy init SQL...");
             try {
-                fileProcessor.createInitSql(sqlList, deployFolder);
+                fileProcessor.createInitSql(sqlList, deployFolder, outputCharset);
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            return;
         }
 
         //產生deploy SQL
         System.out.println("Ready to create deploy SQL...");
         try {
-            fileProcessor.createUpdateSql(sqlList, deploySqlDate, deployFolder);
+            fileProcessor.createUpdateSql(sqlList, deploySqlDate, deployFolder, outputCharset);
         } catch (IOException e) {
             e.printStackTrace();
         }
