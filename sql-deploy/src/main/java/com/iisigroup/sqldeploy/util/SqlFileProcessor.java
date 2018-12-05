@@ -186,8 +186,12 @@ public class SqlFileProcessor {
         String fileName = fileFormat.replace("{yyyyMMdd}", todayStr);
         File deployFile = new File(folder, fileName);
 
-        this.writeFile(deployFile, writeContent.toString(), charset);
-        System.out.println("create deploy SQL was completed!");
+        if(!"".equals(writeContent.toString())) {
+            this.writeFile(deployFile, writeContent.toString(), charset);
+            System.out.println("create deploy SQL was completed!");
+        } else {
+            System.out.println("there is no any deploy SQL, nothing to create.");
+        }
     }
 
     private void writeFile(File deployFile, String content, String charset) throws IOException {
@@ -212,14 +216,21 @@ public class SqlFileProcessor {
 
     private StringBuilder getWriteContent(List<SQL> allSqls, Date dayAfter) {
         StringBuilder content = new StringBuilder();
+        boolean anyUpdate = false;
         for (SQL sql : allSqls) {
             Map<Date, StringBuilder> allUpdates = sql.getUpdateSql();
             String sqlFileName = sql.getSqlFileName();
             content.append("--").append(sqlFileName).append(BREAK_LINE);
             StringBuilder targetDateSql = this.getTargetDateSql(allUpdates, dayAfter);
             content.append(targetDateSql).append(BREAK_LINE);
+            if(!"".equals(targetDateSql.toString()))
+                anyUpdate = true;
         }
-        return content;
+        if(anyUpdate) {
+            return content;
+        } else {
+            return new StringBuilder();
+        }
     }
 
     private StringBuilder getTargetDateSql(Map<Date, StringBuilder> allUpdates, Date dayAfter) {
