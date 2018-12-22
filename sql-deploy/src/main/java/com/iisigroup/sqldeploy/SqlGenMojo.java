@@ -3,6 +3,7 @@ package com.iisigroup.sqldeploy;
 
 import com.iisigroup.sqldeploy.model.SQL;
 import com.iisigroup.sqldeploy.util.SqlFileProcessor;
+import com.java.sqlconverter.model.SqlServerConfig;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
@@ -52,9 +53,23 @@ public class SqlGenMojo extends AbstractMojo {
     private String outputCharset;
 
 
+    // SQL server connection config
+    @Parameter(defaultValue = "localhost", property = "host")
+    private String host;
+
+    @Parameter(defaultValue = "1433", property = "port")
+    private String port;
+
+    @Parameter(defaultValue = "sa", property = "userName")
+    private String userName;
+
+    @Parameter(defaultValue = "p@ssw0rd", property = "password")
+    private String password;
+
 
     public void execute() throws MojoExecutionException {
-        SqlFileProcessor fileProcessor = new SqlFileProcessor(fileFormat);
+        SqlServerConfig dbConfg = new SqlServerConfig(host, port, userName, password);
+        SqlFileProcessor fileProcessor = new SqlFileProcessor(fileFormat, dbConfg);
         List<SQL> sqlList = new ArrayList<>();
         if(scanFolder == null || !scanFolder.isDirectory() || deployFolder == null || !deployFolder.isDirectory()) {
             throw new MojoExecutionException("make sure scanFolder and deployFolder is correct!");
