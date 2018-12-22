@@ -54,16 +54,16 @@ public class SqlGenMojo extends AbstractMojo {
 
 
     // SQL server connection config
-    @Parameter(defaultValue = "localhost", property = "host")
+    @Parameter(property = "host")
     private String host;
 
-    @Parameter(defaultValue = "1433", property = "port")
+    @Parameter(property = "port")
     private String port;
 
-    @Parameter(defaultValue = "sa", property = "userName")
+    @Parameter(property = "userName")
     private String userName;
 
-    @Parameter(defaultValue = "p@ssw0rd", property = "password")
+    @Parameter(property = "password")
     private String password;
 
 
