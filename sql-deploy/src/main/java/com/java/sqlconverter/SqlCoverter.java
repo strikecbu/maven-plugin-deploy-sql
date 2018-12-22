@@ -37,16 +37,21 @@ public class SqlCoverter {
         String osName = System.getProperty("os.name").toLowerCase();
         if(!osName.contains("mac")) {
             //1.check sql檔案格式是否正確
-            SyntaxCheckReport syntaxCheckReport = SQLSyntaxCheckBuilder
-                    .build()
-                    .setSqlFileText(sqlText)
-                    .setHost(config.getUserName())
-                    .setPort(config.getPort())
-                    .setUserName(config.getUserName())
-                    .setPassword(config.getPassword())
-                    .create()
-                    .check();
-            if (!syntaxCheckReport.isSyntaxCorrect()) {
+            SyntaxCheckReport syntaxCheckReport = null;
+            try {
+                syntaxCheckReport = SQLSyntaxCheckBuilder
+                        .build()
+                        .setSqlFileText(sqlText)
+                        .setHost(config.getUserName())
+                        .setPort(config.getPort())
+                        .setUserName(config.getUserName())
+                        .setPassword(config.getPassword())
+                        .create()
+                        .check();
+            } catch (Exception e) {
+                System.out.println("can not access DB, error: " + e);
+            }
+            if (syntaxCheckReport != null && !syntaxCheckReport.isSyntaxCorrect()) {
                 throw new IllegalArgumentException("SQL syntax is not correct: \n" + syntaxCheckReport.getErrorMessage());
             }
         } else {
