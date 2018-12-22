@@ -1,6 +1,9 @@
 package com.iisigroup.sqldeploy.util;
 
 import com.iisigroup.sqldeploy.model.SQL;
+import com.java.sqlconverter.SqlCoverter;
+import com.java.sqlconverter.model.SqlServerConfig;
+import com.java.sqlconverter.util.FileUtil;
 
 import java.io.*;
 import java.text.ParseException;
@@ -18,13 +21,16 @@ public class SqlFileProcessor {
 
     static final String BREAK_LINE = System.lineSeparator();
     static final String KEY = "--{}";
+    static final String PK_KEY = "--@pk:";
     private String INIT_KEY = "init";
     private String UPDATE_KEY = "update";
 
     private String deployFileFormat;
+    private SqlServerConfig dbConfig;
 
-    public SqlFileProcessor(String deployFileFormat) {
+    public SqlFileProcessor(String deployFileFormat, SqlServerConfig dbConfig) {
         this.deployFileFormat = deployFileFormat;
+        this.dbConfig = dbConfig;
     }
 
     /**
@@ -42,6 +48,12 @@ public class SqlFileProcessor {
                 System.out.println("skip " + file.getName());
                 continue;
             }
+
+            //check SQL 格式
+            System.out.println("checking sql file: " + file.getName() + " format and rule...");
+            String allSqlStr = FileUtil.readFile(file.getAbsolutePath());
+            SqlCoverter.checkSqlFormat(dbConfig, allSqlStr)._checkSqlRule(allSqlStr);
+
             List<String> allSqls = new ArrayList<>();
             try (
                     FileInputStream fis = new FileInputStream(file);
@@ -52,8 +64,9 @@ public class SqlFileProcessor {
                 while ((line = br.readLine()) != null) {
                     allSqls.add(line);
                 }
-                if (allSqls.size() >= 0)
+                if (allSqls.size() >= 0) {
                     result.put(file.getName(), allSqls);
+                }
             }
         }
         return result;
@@ -89,6 +102,9 @@ public class SqlFileProcessor {
                     updateIndex = i;
                     break;
                 }
+            } else if (line.contains(PK_KEY)) {
+                String pkKey = line.replaceAll(PK_KEY, "").trim();
+                sql.setPrimaryKey(pkKey);
             }
         }
 
@@ -222,9 +238,15 @@ public class SqlFileProcessor {
             String sqlFileName = sql.getSqlFileName();
             content.append("--").append(sqlFileName).append(BREAK_LINE);
             StringBuilder targetDateSql = this.getTargetDateSql(allUpdates, dayAfter);
-            content.append(targetDateSql).append(BREAK_LINE);
             if(!"".equals(targetDateSql.toString()))
                 anyUpdate = true;
+
+            // 轉換insert SQL to upsert SQL
+            if(sql.getPrimaryKey() != null) {
+                targetDateSql.insert(0, PK_KEY + sql.getPrimaryKey() + BREAK_LINE);
+            }
+            String convertInsertSql = SqlCoverter.convertInsertSql(targetDateSql.toString());
+            content.append(convertInsertSql).append(BREAK_LINE);
         }
         if(anyUpdate) {
             return content;

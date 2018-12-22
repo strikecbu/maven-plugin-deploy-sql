@@ -18,6 +18,7 @@ public class SQL {
 
     private String sqlFileName;
     private Type type;
+    private String primaryKey;
     private StringBuilder initSql;
     private Map<Date, StringBuilder> updateSql;
 
@@ -35,6 +36,14 @@ public class SQL {
 
     public void setType(Type type) {
         this.type = type;
+    }
+
+    public String getPrimaryKey() {
+        return primaryKey;
+    }
+
+    public void setPrimaryKey(String primaryKey) {
+        this.primaryKey = primaryKey;
     }
 
     public StringBuilder getInitSql() {
