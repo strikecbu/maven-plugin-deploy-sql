@@ -6,7 +6,7 @@
 
   <groupId>com.iisigroup.sqldeploy</groupId>
   <artifactId>sql-deploy</artifactId>
-  <version>1.0</version>
+  <version>1.1.0</version>
   <packaging>jar</packaging>
   <name>Test MyMojo</name>
 
@@ -24,6 +24,7 @@
       <plugin>
         <groupId>com.iisigroup.sqldeploy</groupId>
         <artifactId>sql-deploy</artifactId>
+        <version>1.1.0</version>
         <configuration>
           <!-- Specify the MyMojo parameter -->
           <deployFolder>../ForDeploy</deployFolder>
