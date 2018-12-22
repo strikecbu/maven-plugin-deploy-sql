@@ -1,6 +1,7 @@
 package com.iisigroup.sqldeploy.util;
 
 import com.iisigroup.sqldeploy.model.SQL;
+import com.java.sqlconverter.model.SqlServerConfig;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -11,7 +12,8 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 public class SqlFileProcessorTest {
-    SqlFileProcessor sqlFileProcessor = new SqlFileProcessor("DeployUAT{yyyyMMdd}.sql");
+    SqlServerConfig dbConfg = new SqlServerConfig("", "", "", "");
+    SqlFileProcessor sqlFileProcessor = new SqlFileProcessor("DeployUAT{yyyyMMdd}.sql", dbConfg);
     @Test
     public void test_full_flow_read_to_write() throws IOException, ParseException {
         File testScanFolder = new File("target/test-classes/ForScan");
