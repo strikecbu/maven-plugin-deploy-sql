@@ -2,6 +2,7 @@ package com.iisigroup.sqldeploy;
 
 
 import com.iisigroup.sqldeploy.model.SQL;
+import com.iisigroup.sqldeploy.util.ProdSqlFileProcessor;
 import com.iisigroup.sqldeploy.util.ProjectSqlFileUtil;
 import com.iisigroup.sqldeploy.util.SqlFileProcessor;
 import com.java.sqlconverter.model.SqlServerConfig;
@@ -22,8 +23,8 @@ import java.util.regex.Pattern;
 /**
  * Goal which create deploy SQL file.
  */
-@Mojo(name = "gen-sql", defaultPhase = LifecyclePhase.PACKAGE)
-public class SqlGenMojo extends AbstractMojo {
+@Mojo(name = "gen-prod-sql", defaultPhase = LifecyclePhase.PACKAGE)
+public class ProdSqlGenMojo extends AbstractMojo {
 
     /**
      * Location of scan folder
@@ -41,7 +42,7 @@ public class SqlGenMojo extends AbstractMojo {
      * 產出Deploy SQL 檔名format，會替換掉{yyyyMMdd}變成今日日期
      * ex: DeployUAT{yyyyMMdd}.sql -> DeployUAT20180828.sql
      */
-    @Parameter(defaultValue = "DeployUAT{yyyyMMdd}.sql", property = "fileFormat")
+    @Parameter(defaultValue = "DeployPROD{yyyyMMdd}.sql", property = "fileFormat")
     private String fileFormat;
 
     @Parameter(property = "scanDate")
@@ -53,48 +54,22 @@ public class SqlGenMojo extends AbstractMojo {
     @Parameter(defaultValue = "UTF-8", property = "outputCharset")
     private String outputCharset;
 
-
-    // SQL server connection config
-    @Parameter(property = "host")
-    private String host;
-
-    @Parameter(property = "port")
-    private String port;
-
-    @Parameter(property = "userName")
-    private String userName;
-
-    @Parameter(property = "password")
-    private String password;
+    @Parameter(defaultValue = "UTF-8", property = "inputCharset")
+    private String inputCharset;
 
 
     public void execute() throws MojoExecutionException {
-        SqlServerConfig dbConfg = new SqlServerConfig(host, port, userName, password);
-        SqlFileProcessor fileProcessor = new SqlFileProcessor(fileFormat, dbConfg);
         List<SQL> sqlList = new ArrayList<>();
         if(scanFolder == null || !scanFolder.isDirectory() || deployFolder == null || !deployFolder.isDirectory()) {
             throw new MojoExecutionException("make sure scanFolder and deployFolder is correct!");
         }
-
-        //SQL string to Model
-        System.out.println("Ready to scan SQL file...");
-        try {
-            Map<String, List<String>> allSqls = fileProcessor.getAllSqls(scanFolder.listFiles());
-            Set<String> keys = allSqls.keySet();
-            for (String key : keys) {
-                SQL sql = fileProcessor.convertStrToModel(key, allSqls.get(key));
-                sqlList.add(sql);
-            }
-        } catch (IOException e) {
-            throw new IllegalStateException(e);
-        }
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd");
 
         //最後日期
         Date deploySqlDate = ProjectSqlFileUtil.getLastDeploySqlDate(deployFolder);
 
         //指定日期
         if(scanDate != null) {
-            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd");
             try {
                 deploySqlDate = dateFormat.parse(scanDate);
                 System.out.println("Assign date is " + deploySqlDate);
@@ -103,24 +78,15 @@ public class SqlGenMojo extends AbstractMojo {
             }
         }
 
-        //init產生
-        if(initCreate) {
-            System.out.println("Ready to create deploy init SQL...");
-            try {
-                fileProcessor.createInitSql(sqlList, deployFolder, outputCharset);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
+        // 取得指定日期之後的SQL file
+        StringBuilder allSqls = ProdSqlFileProcessor.getAllSql(dateFormat.format(deploySqlDate), scanFolder.getAbsolutePath(), inputCharset);
 
         //產生deploy SQL
-        System.out.println("Ready to create deploy SQL...");
-        try {
-            fileProcessor.createUpdateSql(sqlList, deploySqlDate, deployFolder, outputCharset);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        System.out.println("Ready to create deploy Prod SQL...");
+        String fileName = fileFormat.replace("{yyyyMMdd}", dateFormat.format(new Date()));
+        File createFile = new File(deployFolder, fileName);
+        ProdSqlFileProcessor.writeFile(allSqls, createFile, outputCharset);
+
+        System.out.println("create deploy Prod SQL done!");
     }
-
-
 }

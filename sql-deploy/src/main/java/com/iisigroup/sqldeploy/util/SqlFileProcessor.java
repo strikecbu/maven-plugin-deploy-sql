@@ -19,11 +19,13 @@ import java.util.*;
  */
 public class SqlFileProcessor {
 
-    static final String BREAK_LINE = System.lineSeparator();
-    static final String KEY = "--{}";
-    static final String PK_KEY = "--@pk:";
-    private String INIT_KEY = "init";
-    private String UPDATE_KEY = "update";
+    private static final String BREAK_LINE = System.lineSeparator();
+    private static final String SQL_SERVER_COMMIT_KEY = "GO";
+    private static final String KEY = "--{}";
+    private static final String PK_KEY = "--@pk:";
+    private static final String INIT_KEY = "init";
+    private static final String UPDATE_KEY = "update";
+
 
     private String deployFileFormat;
     private SqlServerConfig dbConfig;
@@ -247,6 +249,7 @@ public class SqlFileProcessor {
             }
             String convertInsertSql = SqlCoverter.convertInsertSql(targetDateSql.toString());
             content.append(convertInsertSql).append(BREAK_LINE);
+            content.append(SQL_SERVER_COMMIT_KEY).append(BREAK_LINE);
         }
         if(anyUpdate) {
             return content;
@@ -280,6 +283,7 @@ public class SqlFileProcessor {
             StringBuilder initSql = sql.getInitSql();
             content.append("--").append(sqlFileName).append(BREAK_LINE);
             content.append(initSql).append(BREAK_LINE);
+            content.append(SQL_SERVER_COMMIT_KEY).append(BREAK_LINE);
         }
         String fileName = "DeployUAT_Init.sql";
         File deployFile = new File(folder, fileName);
