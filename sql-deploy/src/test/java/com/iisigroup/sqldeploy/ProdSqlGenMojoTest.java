@@ -1,6 +1,5 @@
 package com.iisigroup.sqldeploy;
 
-import org.apache.maven.plugin.testing.AbstractMojoTestCase;
 import org.apache.maven.plugin.testing.MojoRule;
 import org.apache.maven.plugin.testing.WithoutMojo;
 import org.junit.Before;
@@ -9,12 +8,12 @@ import org.junit.Test;
 
 import java.io.File;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
 import java.util.Date;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
-public class SqlGenMojoTest {
+public class ProdSqlGenMojoTest {
 
     @Rule
     public MojoRule rule = new MojoRule()
@@ -39,15 +38,15 @@ public class SqlGenMojoTest {
      */
     @Test
     public void testSomething() throws Exception {
-        File pom = new File( "target/test-classes/project-to-test/genUat" );
+        File pom = new File( "target/test-classes/project-to-test/genProd" );
         assertNotNull( pom );
         assertTrue( pom.exists() );
 
-        SqlGenMojo myMojo = (SqlGenMojo) rule.lookupConfiguredMojo( pom,"gen-sql");
+        ProdSqlGenMojo myMojo = (ProdSqlGenMojo) rule.lookupConfiguredMojo( pom,"gen-prod-sql");
         assertNotNull( myMojo );
         myMojo.execute();
 
-        File deployFolder = (File) rule.getVariableValueFromObject(myMojo, "deployFolder");
+        File deployFolder = (File) rule.getVariableValueFromObject(myMojo, "deployProdFolder");
         System.out.println(deployFolder.getAbsolutePath());
         assertNotNull(deployFolder);
         assertTrue(deployFolder.exists());
