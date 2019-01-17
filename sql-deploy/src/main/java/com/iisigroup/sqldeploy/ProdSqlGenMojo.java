@@ -4,39 +4,33 @@ package com.iisigroup.sqldeploy;
 import com.iisigroup.sqldeploy.model.SQL;
 import com.iisigroup.sqldeploy.util.ProdSqlFileProcessor;
 import com.iisigroup.sqldeploy.util.ProjectSqlFileUtil;
-import com.iisigroup.sqldeploy.util.SqlFileProcessor;
-import com.java.sqlconverter.model.SqlServerConfig;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 
 import java.io.File;
-import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Goal which create deploy SQL file.
  */
-@Mojo(name = "gen-prod-sql", defaultPhase = LifecyclePhase.PACKAGE)
+@Mojo(name = "gen-prod-sql")
 public class ProdSqlGenMojo extends AbstractMojo {
 
     /**
      * Location of scan folder
      */
-    @Parameter(property = "scanFolder", required = true)
-    private File scanFolder;
+    @Parameter(property = "scanUatFolder", required = true)
+    private File scanUatFolder;
 
     /**
      * Location of place deploy sql folder
      */
-    @Parameter(property = "deployFolder", required = true)
-    private File deployFolder;
+    @Parameter(property = "deployProdFolder", required = true)
+    private File deployProdFolder;
 
     /**
      * 產出Deploy SQL 檔名format，會替換掉{yyyyMMdd}變成今日日期
@@ -60,13 +54,18 @@ public class ProdSqlGenMojo extends AbstractMojo {
 
     public void execute() throws MojoExecutionException {
         List<SQL> sqlList = new ArrayList<>();
-        if(scanFolder == null || !scanFolder.isDirectory() || deployFolder == null || !deployFolder.isDirectory()) {
-            throw new MojoExecutionException("make sure scanFolder and deployFolder is correct!");
+        System.out.println("scanUatFolder: " + scanUatFolder.getAbsolutePath());
+        if(scanUatFolder == null || !scanUatFolder.isDirectory() || deployProdFolder == null) {
+            throw new MojoExecutionException("make sure scanUatFolder and deployProdFolder is correct!");
+        }
+        System.out.println("deployProdFolder: " + deployProdFolder.getAbsolutePath());
+        if(!deployProdFolder.exists() || !deployProdFolder.isDirectory()) {
+            deployProdFolder.mkdirs();
         }
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd");
 
         //最後日期
-        Date deploySqlDate = ProjectSqlFileUtil.getLastDeploySqlDate(deployFolder);
+        Date deploySqlDate = ProjectSqlFileUtil.getLastDeploySqlDate(deployProdFolder);
 
         //指定日期
         if(scanDate != null) {
@@ -79,12 +78,12 @@ public class ProdSqlGenMojo extends AbstractMojo {
         }
 
         // 取得指定日期之後的SQL file
-        StringBuilder allSqls = ProdSqlFileProcessor.getAllSql(dateFormat.format(deploySqlDate), scanFolder.getAbsolutePath(), inputCharset);
+        StringBuilder allSqls = ProdSqlFileProcessor.getAllSql(dateFormat.format(deploySqlDate), scanUatFolder.getAbsolutePath(), inputCharset);
 
         //產生deploy SQL
         System.out.println("Ready to create deploy Prod SQL...");
         String fileName = fileFormat.replace("{yyyyMMdd}", dateFormat.format(new Date()));
-        File createFile = new File(deployFolder, fileName);
+        File createFile = new File(deployProdFolder, fileName);
         ProdSqlFileProcessor.writeFile(allSqls, createFile, outputCharset);
 
         System.out.println("create deploy Prod SQL done!");
