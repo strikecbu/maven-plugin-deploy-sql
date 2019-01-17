@@ -25,9 +25,11 @@ public class ProdSqlFileProcessorTest {
 
         //write content
         String fileName = "DeployTest" + dateFormat.format(new Date()) + ".sql";
-        File file = new File(deployFolderPath, fileName);
-        ProdSqlFileProcessor.writeFile(stringBuilder, file, "UTF-8");
-        Assert.assertTrue(file.exists());
+        File folder = new File(deployFolderPath, fileName);
+        if(!folder.exists())
+            folder.mkdirs();
+        ProdSqlFileProcessor.writeFile(stringBuilder, folder, "UTF-8");
+        Assert.assertTrue(folder.exists());
     }
 
 }
