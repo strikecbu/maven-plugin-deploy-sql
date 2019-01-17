@@ -7,7 +7,7 @@
 
   <groupId>com.iisigroup.sqldeploy</groupId>
   <artifactId>sql-deploy</artifactId>
-  <version>1.2.01</version>
+  <version>1.2.02</version>
   <packaging>maven-plugin</packaging>
 
   <name>sql-deploy Maven Plugin</name>
