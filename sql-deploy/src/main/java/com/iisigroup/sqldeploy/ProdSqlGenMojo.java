@@ -54,12 +54,16 @@ public class ProdSqlGenMojo extends AbstractMojo {
 
     public void execute() throws MojoExecutionException {
         List<SQL> sqlList = new ArrayList<>();
+        if(scanUatFolder == null || deployProdFolder == null) {
+            throw new MojoExecutionException("make sure scanUatFolder and deployProdFolder have values!");
+        }
         System.out.println("scanUatFolder: " + scanUatFolder.getAbsolutePath());
-        if(scanUatFolder == null || !scanUatFolder.isDirectory() || deployProdFolder == null) {
-            throw new MojoExecutionException("make sure scanUatFolder and deployProdFolder is correct!");
+        if(!scanUatFolder.isDirectory()) {
+            throw new MojoExecutionException("make sure scanUatFolder is correct folder!");
         }
         System.out.println("deployProdFolder: " + deployProdFolder.getAbsolutePath());
         if(!deployProdFolder.exists() || !deployProdFolder.isDirectory()) {
+            System.out.println("create deployProdFolder: " + deployProdFolder.getAbsolutePath());
             deployProdFolder.mkdirs();
         }
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd");
