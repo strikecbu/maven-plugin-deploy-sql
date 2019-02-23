@@ -3,9 +3,7 @@ package com.iisigroup.sqldeploy.util;
 import java.io.*;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -34,7 +32,7 @@ public class ProdSqlFileProcessor {
         if(!folder.isDirectory())
             throw new IllegalArgumentException("scanFolder must folder path");
 
-        List<File> needFiles = new ArrayList<>();
+        Map<Long, File> fileMap = new HashMap<>();
         for (File file : folder.listFiles()) {
             String fileName = file.getName();
             String regExStr = "^.*([0-9]{8}).*\\.sql$";
@@ -49,12 +47,29 @@ public class ProdSqlFileProcessor {
                 }
                 int compare = date.compareTo(assignDate);
                 if(compare >= 1) {
-                    needFiles.add(file);
+                    fileMap.put(date.getTime(), file);
                 }
             }
         }
 
+        //sort file date
+        List<File> needFiles = sortFileDate(fileMap);
+
         return getAllFileStr(needFiles, encoding);
+    }
+
+    private static ArrayList<File> sortFileDate(Map<Long, File> fileMap) {
+        Set<Long> keySet = fileMap.keySet();
+        Long[] sortKeys = new Long[]{};
+        sortKeys = keySet.toArray(sortKeys);
+        Arrays.sort(sortKeys);
+
+        ArrayList<File> result = new ArrayList<>();
+        for (Long sortKey : sortKeys) {
+            File file = fileMap.get(sortKey);
+            result.add(file);
+        }
+        return result;
     }
 
     private static StringBuilder getAllFileStr(List<File> allFiles, String encoding) {
