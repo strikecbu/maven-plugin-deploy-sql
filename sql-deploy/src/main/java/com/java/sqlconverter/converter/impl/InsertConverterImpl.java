@@ -33,6 +33,9 @@ public class InsertConverterImpl extends com.java.sqlconverter.converter.impl.In
         sb.append("\n");
         for (String sqlText : this.sqlDetails.getUpsertTextBlocks()) {
             List<InsertModel> insertModels = getInsertSqls(sqlText);
+            //todo
+            // run DB 完的數量
+            // validate insertModels size == run DB 完的數量
             for (InsertModel insertModel : insertModels) {
                 String temp = insert2Update(insertModel);
                 sb.append(temp).append("\n");

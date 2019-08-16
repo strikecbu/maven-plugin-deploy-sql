@@ -25,7 +25,12 @@ public class SqlFileProcessor {
     private static final String PK_KEY = "--@pk:";
     private static final String INIT_KEY = "init";
     private static final String UPDATE_KEY = "update";
+    private static final String SKIP_ON_KEY = "--@skip:on";
+    private static final String SKIP_OFF_KEY = "--@skip:off";
+    private static final String UPSERT_ON_KEY = "--@upsert:on";
+    private static final String UPSERT_OFF_KEY = "--@upsert:off";
 
+    public static Map<String, StringBuffer> skipSqls = new HashMap<>();
 
     private String deployFileFormat;
     private SqlServerConfig dbConfig;
@@ -121,6 +126,86 @@ public class SqlFileProcessor {
         return sql;
     }
 
+    private void checkUpdateContent(String sqlFileName, Map<Date, StringBuilder> updateSqls, Date dayAfter) {
+        Set<Date> allDates = updateSqls.keySet();
+        Map<Date, StringBuilder> tests = new HashMap<>();
+        for (Date date : allDates) {
+            if(date.getTime() > dayAfter.getTime()) {
+                tests.put(date, updateSqls.get(date));
+            }
+        }
+        checkUpdateContent(sqlFileName, tests);
+    }
+
+    /**
+     * 檢查script中是否帶有delete or drop 相關script字眼
+     * only check start with drop or delete these two key words
+     * @param sqlFileName sql file name
+     * @param updateSqls all update SQL scripts
+     */
+    private void checkUpdateContent(String sqlFileName, Map<Date, StringBuilder> updateSqls) {
+        StringBuffer allSqls = new StringBuffer();
+        for (StringBuilder value : updateSqls.values()) {
+            boolean isSkipOn = false;
+            String[] lines = value.toString().split("\n");
+            for (String line : lines) {
+                if(line.matches("^\\s*" + SKIP_ON_KEY + ".*")) {
+                    isSkipOn = true;
+                    continue;
+                } else if(line.matches("^\\s*" + SKIP_OFF_KEY + ".*")) {
+                    isSkipOn = false;
+                }
+                if(isSkipOn) {
+                    allSqls.append("-- ").append(line).append("\n");
+                    continue;
+                }
+
+                if(line.matches("^(?i)\\s*drop\\s+table\\s*.*$")) {
+                    System.out.println("Script validate fail : " + line);
+                    throw new IllegalStateException("NOT allow drop table script in the update area!");
+                }
+                if(line.matches("^(?i)\\s*delete\\s+(from)?\\s*.*$")) {
+                    System.out.println("Script validate fail : " + line);
+                    throw new IllegalStateException("NOT allow delete script in the update area!");
+                }
+            }
+            if(isSkipOn)
+                throw new IllegalStateException("NOT found close skip mark words (--@skip:off)");
+
+            checkInsertFormat(value.toString());
+        }
+        if(!"".equals(allSqls.toString()))
+            skipSqls.put(sqlFileName, allSqls);
+    }
+
+    private void checkInsertFormat(String sqlStr) {
+        String[] lines = sqlStr.split("\n");
+        boolean isUpdertOn = false;
+        for (String line : lines) {
+            if(line.matches("^\\s*" + UPSERT_ON_KEY + ".*")) {
+                isUpdertOn = true;
+            } else if(line.matches("^\\s*" + UPSERT_OFF_KEY + ".*")) {
+                isUpdertOn = false;
+            }
+            if(isUpdertOn) {
+                //  block REPLACE(NEWID(),'-','')
+                if(line.matches("(?i).*REPLACE\\s*\\(\\s*NEWID\\s*\\(\\)\\s*,\\s*'-'\\s*,\\s*''\\s*\\).*$")) {
+                    System.out.println("Script validate fail : " + line);
+                    throw new IllegalStateException("NOT allow insert script with REPLACE(NEWID(),'-','') !");
+                }
+                continue;
+            }
+
+            if(line.matches("^(?i)\\s*insert\\s+into\\s*.*$")) {
+                System.out.println("Script validate fail : " + line);
+                throw new IllegalStateException("NOT allow insert script without @upsert in the update area!");
+            }
+        }
+        if(isUpdertOn)
+            throw new IllegalStateException("NOT found close upsert mark words (--@upsert:off)");
+
+    }
+
     private SQL.Type getSqlType(String line) {
         String orderStr = this.getOrder(line);
         for (SQL.Type type : SQL.Type.values()) {
@@ -192,7 +277,7 @@ public class SqlFileProcessor {
      * @param allSqls all sql model in list
      * @param dayAfter 指定的日期之後的SQL
      * @param folder 產出目錄
-     * @param charset
+     * @param charset 指定的file encode
      * @throws IOException
      */
     public void createUpdateSql(List<SQL> allSqls, Date dayAfter, File folder, String charset) throws IOException {
@@ -205,11 +290,27 @@ public class SqlFileProcessor {
         File deployFile = new File(folder, fileName);
 
         if(!"".equals(writeContent.toString())) {
+            writeContent.insert(0, addWarningMsg().toString());
             this.writeFile(deployFile, writeContent.toString(), charset);
             System.out.println("create deploy SQL was completed!");
         } else {
             System.out.println("there is no any deploy SQL, nothing to create.");
         }
+    }
+
+    private StringBuffer addWarningMsg() {
+        StringBuffer result = new StringBuffer();
+        //title
+        result.append("----------  Waring!!! Some Script Had Been Skip Validate! ------------");
+        result.append("\n");
+        for (String fileName : skipSqls.keySet()) {
+            result.append("-- fileName: ").append(fileName).append("\n");
+            result.append(skipSqls.get(fileName));
+            result.append("\n");
+        }
+        result.append("----------------------------------------------------------------------");
+        result.append("\n");
+        return result;
     }
 
     private void writeFile(File deployFile, String content, String charset) throws IOException {
@@ -238,6 +339,8 @@ public class SqlFileProcessor {
         for (SQL sql : allSqls) {
             Map<Date, StringBuilder> allUpdates = sql.getUpdateSql();
             String sqlFileName = sql.getSqlFileName();
+            //TODO validate SQL UPDATE 內容
+            checkUpdateContent(sqlFileName, allUpdates, dayAfter);
             content.append("--").append(sqlFileName).append(BREAK_LINE);
             StringBuilder targetDateSql = this.getTargetDateSql(allUpdates, dayAfter);
             if(!"".equals(targetDateSql.toString()))
@@ -273,7 +376,7 @@ public class SqlFileProcessor {
      * create init deploy sql
      * @param allSqls all sql model in list
      * @param folder 產出目錄
-     * @param charset
+     * @param charset file encoding
      * @throws IOException
      */
     public void createInitSql(List<SQL> allSqls, File folder, String charset) throws IOException {

@@ -19,7 +19,8 @@ import java.util.List;
 public class CommentRuleByMark implements CommentRule {
     private final List<String> regexs = Arrays.asList(
             "--@\\s*?pk\\s*?:\\s*?.+",
-            "--@\\s*?upsert\\s*?:\\s*?(on|off)"
+            "--@\\s*?upsert\\s*?:\\s*?(on|off)",
+            "--@skip:on\\s*?", "--@skip:off\\s*?"
     );
 
     @Override

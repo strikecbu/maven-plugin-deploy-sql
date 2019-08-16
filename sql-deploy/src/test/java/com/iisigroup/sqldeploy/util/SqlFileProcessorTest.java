@@ -16,8 +16,8 @@ public class SqlFileProcessorTest {
     SqlFileProcessor sqlFileProcessor = new SqlFileProcessor("DeployUAT{yyyyMMdd}.sql", dbConfg);
     @Test
     public void test_full_flow_read_to_write() throws IOException, ParseException {
-        File testScanFolder = new File("target/test-classes/ForScan");
-        File testDeployFolder = new File("target/test-classes/ForDeploy");
+        File testScanFolder = new File("/Users/maiev/Documents/iisi/IISI_MavenPluginSQL/codeSpace/sql-deploy/target/test-classes/ForScan");
+        File testDeployFolder = new File("/Users/maiev/Documents/iisi/IISI_MavenPluginSQL/codeSpace/sql-deploy/target/test-classes/ForDeploy");
         Map<String, List<String>> allSqls = sqlFileProcessor.getAllSqls(testScanFolder.listFiles());
         Assert.assertNotNull(allSqls);
 
@@ -30,7 +30,7 @@ public class SqlFileProcessorTest {
         }
 
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd");
-        sqlFileProcessor.createUpdateSql(sqlList, dateFormat.parse("20180821"), testDeployFolder, "UTF-8");
+        sqlFileProcessor.createUpdateSql(sqlList, dateFormat.parse("20190110"), testDeployFolder, "UTF-8");
         String todayStr = dateFormat.format(new Date());
         String fileName = "DeployUAT" + todayStr + ".sql";
         File deployFile = new File(testDeployFolder, fileName);
