@@ -196,7 +196,7 @@ public class SqlFileProcessor {
                 continue;
             }
 
-            if(line.matches("^(?i)\\s*insert\\s+into\\s*.*$")) {
+            if(line.matches("^(?i)\\s*insert(\\s+into)?\\s*.*$")) {
                 System.out.println("Script validate fail : " + line);
                 throw new IllegalStateException("NOT allow insert script without @upsert in the update area!");
             }
