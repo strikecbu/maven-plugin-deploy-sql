@@ -1,5 +1,5 @@
 --{} NORMAL_TYPE
-
+--@pk:OID
 --{} init
 CREATE TABLE [dbo].[NOW_TEST1](
 	[OID] [varchar](32) NOT NULL,
@@ -19,8 +19,9 @@ INSERT INTO NOW_TEST1 (OID, COL2) VALUES ('oid3', 'value3');
 
 --{} 2018,08,21
 UPDATE NOW_TEST1 SET COL2 = 'newValue1' where COL1 = 'oid1';
+--@upsert:on
 INSERT INTO NOW_TEST1 (OID, COL2) VALUES ('oid4', 'value4');
-
+--@upsert:off
 --{} 2018,08,22
 UPDATE NOW_TEST1 SET COL2 = 'newValue2' where COL1 = 'oid2';
 

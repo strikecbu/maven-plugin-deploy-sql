@@ -19,8 +19,9 @@ INSERT INTO NOW_TEST (OID, COL2) VALUES ('oid3', 'value3');
 
 --{} 2018,08,21
 UPDATE NOW_TEST SET COL2 = 'newValue1' where COL1 = 'oid1';
+--@upsert:on
 INSERT INTO NOW_TEST (OID, COL2) VALUES ('oid4', 'value4');
-
+--@upsert:off
 --{} 2018,08,22
 UPDATE NOW_TEST SET COL2 = 'newValue2' where COL1 = 'oid2';
 
@@ -57,3 +58,9 @@ s.events=''event26,event6'';
 s.tl(this,''o'',''Application Step1'');', 'GENERAL_SCRIPT', 'GENERAL_SCRIPT 20151012', null, null, 'A', '2015-10-12 16:40:36.770', 'USER001', null, null);
 
 --@upsert:off
+
+--{} 2019,08,12
+--@skip:on
+delete from [dbo].[CLM_KEY_VALUE_UB]
+WHERE KEY_ID = '123';
+--@skip:off
