@@ -300,6 +300,8 @@ public class SqlFileProcessor {
 
     private StringBuffer addWarningMsg() {
         StringBuffer result = new StringBuffer();
+        if(skipSqls.size() == 0)
+            return result;
         //title
         result.append("----------  Waring!!! Some Script Had Been Skip Validate! ------------");
         result.append("\n");
