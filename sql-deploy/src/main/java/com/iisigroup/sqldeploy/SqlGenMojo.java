@@ -72,6 +72,9 @@ public class SqlGenMojo extends AbstractMojo {
         SqlServerConfig dbConfg = new SqlServerConfig(host, port, userName, password);
         SqlFileProcessor fileProcessor = new SqlFileProcessor(fileFormat, dbConfg);
         List<SQL> sqlList = new ArrayList<>();
+        if(deployFolder != null && !deployFolder.exists()) {
+            deployFolder.mkdirs();
+        }
         if(scanFolder == null || !scanFolder.isDirectory() || deployFolder == null || !deployFolder.isDirectory()) {
             throw new MojoExecutionException("make sure scanFolder and deployFolder is correct!");
         }
