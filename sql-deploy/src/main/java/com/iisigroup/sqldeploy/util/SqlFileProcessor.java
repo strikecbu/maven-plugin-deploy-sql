@@ -127,14 +127,20 @@ public class SqlFileProcessor {
     }
 
     private void checkUpdateContent(String sqlFileName, Map<Date, StringBuilder> updateSqls, Date dayAfter) {
+        System.out.println("Start checking update content...");
+        System.out.println("The SQL file name: " + sqlFileName);
+        System.out.println("The day after: " + dayAfter);
         Set<Date> allDates = updateSqls.keySet();
         Map<Date, StringBuilder> tests = new HashMap<>();
         for (Date date : allDates) {
             if(date.getTime() > dayAfter.getTime()) {
+//                System.out.println("Put update SQL date: " + date);
                 tests.put(date, updateSqls.get(date));
             }
         }
+        System.out.println("Put all these update SQL dates: " + tests.keySet());
         checkUpdateContent(sqlFileName, tests);
+        System.out.println("Start checking update is done.");
     }
 
     /**
@@ -147,7 +153,7 @@ public class SqlFileProcessor {
         StringBuffer allSqls = new StringBuffer();
         for (StringBuilder value : updateSqls.values()) {
             boolean isSkipOn = false;
-            String[] lines = value.toString().split("\n");
+            String[] lines = value.toString().split(System.lineSeparator());
             for (String line : lines) {
                 if(line.matches("^\\s*" + SKIP_ON_KEY + ".*")) {
                     isSkipOn = true;
@@ -179,7 +185,7 @@ public class SqlFileProcessor {
     }
 
     private void checkInsertFormat(String sqlStr) {
-        String[] lines = sqlStr.split("\n");
+        String[] lines = sqlStr.split(System.lineSeparator());
         boolean isUpdertOn = false;
         for (String line : lines) {
             if(line.matches("^\\s*" + UPSERT_ON_KEY + ".*")) {
