@@ -347,6 +347,8 @@ public class SqlFileProcessor {
         for (SQL sql : allSqls) {
             Map<Date, StringBuilder> allUpdates = sql.getUpdateSql();
             String sqlFileName = sql.getSqlFileName();
+            //移除--@upsert內的delete內容
+            removeInsertDelete(sql);
             //TODO validate SQL UPDATE 內容
             checkUpdateContent(sqlFileName, allUpdates, dayAfter);
             content.append("--").append(sqlFileName).append(BREAK_LINE);
@@ -402,6 +404,44 @@ public class SqlFileProcessor {
         System.out.println("create deploy init SQL was completed!");
     }
 
+    /**
+     * remove all delete SQL contents in --@upsert area
+     * @param sql
+     */
+    private void removeInsertDelete(SQL sql) {
+        Map<Date, StringBuilder> updateSql = sql.getUpdateSql();
+        for (Date dateKey : updateSql.keySet()) {
+            boolean isUpdertOn = false;
+            boolean isDeleteOn = false;
+            StringBuilder newSqlLines = new StringBuilder();
+            for (String line : updateSql.get(dateKey).toString().split(System.lineSeparator())) {
+                if (line.matches("^\\s*" + UPSERT_ON_KEY + ".*")) {
+                    isUpdertOn = true;
+                    newSqlLines.append(line).append(System.lineSeparator());
+                    continue;
+                } else if (line.matches("^\\s*" + UPSERT_OFF_KEY + ".*")) {
+                    isUpdertOn = false;
+                }
+                if(!isUpdertOn) {
+                    newSqlLines.append(line).append(System.lineSeparator());
+                    continue;
+                }
+                if(line.matches("^(?i)\\s*delete\\s+(from)?.*$")) {
+                    isDeleteOn = true;
+                    continue;
+                }
+
+                if(isDeleteOn && !line.matches("^(?i)\\s*(insert|select|drop|alter|--)+.*")) {
+                    continue;
+                }
+
+                isDeleteOn = false;
+                newSqlLines.append(line).append(System.lineSeparator());
+            }
+            updateSql.put(dateKey, newSqlLines);
+        }
+
+    }
 
 
 

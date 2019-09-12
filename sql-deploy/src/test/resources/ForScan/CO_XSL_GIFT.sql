@@ -42,6 +42,7 @@ DROP TABLE [dbo].[CO_XSL_GIFT]
 --@skip:off
 
 --@upsert:on
+delete from CO_XSL_GIFT where GIFT_ID in ('290');
 INSERT INTO CO_XSL_GIFT (OID, GIFT_ID, GIFT_NAME, PIC_URL, ACTION_FLAG, MODIFY_DATE, MODIFIER, EXPORT_NO, DESC_HTML, EDM_DESC, CFMPG_PIC_URL, THX_BENEFIT_DESC) values
 ( 'fasdjfkadsfkjsdakfj','290','韓國Neoflam鈦金不沾鍋具4件組(290)','', 'A', current_timestamp, 'user001', null, '<p>NO_NEED_TO_USE</p>', '', 'NO_NEED_TO_USE', NULL);
 INSERT INTO CO_XSL_GIFT (OID, GIFT_ID, GIFT_NAME, PIC_URL, ACTION_FLAG, MODIFY_DATE, MODIFIER, EXPORT_NO, DESC_HTML, EDM_DESC, CFMPG_PIC_URL, THX_BENEFIT_DESC) values ('KFIKSISUJDIJD9JKDUPIKDIWH','291','29吋行李箱(閃耀銀)(291)','', 'A', current_timestamp, 'user001', null, '<p>NO_NEED_TO_USE</p>', '', 'NO_NEED_TO_USE', NULL);

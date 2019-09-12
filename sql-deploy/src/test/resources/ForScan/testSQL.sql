@@ -32,10 +32,11 @@ UPDATE NOW_TEST SET COL2 = 'newValue2' where COL1 = 'oid2';
 --{} 2018,08,24
 UPDATE NOW_TEST SET COL2 = 'newValue2' where COL1 = 'oid2';
 
---{} 2018,08,27
+--{} 2019,08,11
 UPDATE NOW_TEST SET COL2 = 'newValue2' where COL1 = 'oid2';
-
 --@upsert:on
+delete from [dbo].[CLM_KEY_VALUE_UB]
+WHERE KEY_ID = '123';
 
 --簡易難度
 INSERT INTO XCOLA.dbo.DUL_SOID_MAPPING (OID, ID_NO, AGENT_CODE) VALUES ('4EE340B2A3FE4CD686960F6273AA5E98', 'M123456789', '92757');
