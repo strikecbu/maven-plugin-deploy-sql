@@ -64,6 +64,9 @@ public class InitailSqlServiceImpl implements InitailSqlService {
                 count++;
             }
         }
+        if(count == 0) //沒有任何異動即跳出
+            return new StringBuilder();
+
         //回填deploy table
         needInitTableFileNames.addAll(checkedTableNames);
         if(checkFile.exists()) {
@@ -77,9 +80,6 @@ public class InitailSqlServiceImpl implements InitailSqlService {
             throw new IllegalStateException("Can NOT create new deployTable file");
         }
 
-
-        if(count == 0)
-            return new StringBuilder();
         return result;
     }
 
