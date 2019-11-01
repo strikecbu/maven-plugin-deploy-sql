@@ -1,6 +1,8 @@
 package com.iisigroup.sqldeploy.util;
 
 import com.iisigroup.sqldeploy.model.SQL;
+import com.iisigroup.sqldeploy.service.InitailSqlService;
+import com.iisigroup.sqldeploy.service.impl.InitailSqlServiceImpl;
 import com.java.sqlconverter.SqlCoverter;
 import com.java.sqlconverter.model.SqlServerConfig;
 import com.java.sqlconverter.util.FileUtil;
@@ -35,9 +37,12 @@ public class SqlFileProcessor {
     private String deployFileFormat;
     private SqlServerConfig dbConfig;
 
-    public SqlFileProcessor(String deployFileFormat, SqlServerConfig dbConfig) {
+    private InitailSqlService initailSqlService;
+
+    public SqlFileProcessor(String deployFileFormat, SqlServerConfig dbConfig, File scanFolder, File deployFolder) {
         this.deployFileFormat = deployFileFormat;
         this.dbConfig = dbConfig;
+        this.initailSqlService = new InitailSqlServiceImpl(scanFolder, deployFolder);
     }
 
     /**
@@ -296,12 +301,24 @@ public class SqlFileProcessor {
         File deployFile = new File(folder, fileName);
 
         if(!"".equals(writeContent.toString())) {
+            // add update title
+            addUpdateTitle(writeContent);
+            //加入新增的table schema
+            StringBuilder newTableSchemas = initailSqlService.getNewTableSchema(allSqls);
+            writeContent.insert(0,newTableSchemas);
+            //加入警告訊息
             writeContent.insert(0, addWarningMsg().toString());
             this.writeFile(deployFile, writeContent.toString(), charset);
             System.out.println("create deploy SQL was completed!");
         } else {
             System.out.println("there is no any deploy SQL, nothing to create.");
         }
+    }
+
+    private void addUpdateTitle(StringBuilder writeContent) {
+        writeContent.insert(0, "----------------------------------------------- \n\r");
+        writeContent.insert(0, "----------------- UPDATE SCRIPT --------------- \n\r");
+        writeContent.insert(0, "----------------------------------------------- \n\r");
     }
 
     private StringBuffer addWarningMsg() {

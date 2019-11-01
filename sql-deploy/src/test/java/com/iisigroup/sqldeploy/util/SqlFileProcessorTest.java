@@ -12,12 +12,13 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 public class SqlFileProcessorTest {
+    File testScanFolder = new File("/Users/maiev/Documents/iisi/IISI_MavenPluginSQL/codeSpace/sql-deploy/target/test-classes/ForScan");
+    File testDeployFolder = new File("/Users/maiev/Documents/iisi/IISI_MavenPluginSQL/codeSpace/sql-deploy/target/test-classes/ForDeploy");
+
     SqlServerConfig dbConfg = new SqlServerConfig("", "", "", "");
-    SqlFileProcessor sqlFileProcessor = new SqlFileProcessor("DeployUAT{yyyyMMdd}.sql", dbConfg);
+    SqlFileProcessor sqlFileProcessor = new SqlFileProcessor("DeployUAT{yyyyMMdd}.sql", dbConfg, testScanFolder, testDeployFolder);
     @Test
     public void test_full_flow_read_to_write() throws IOException, ParseException {
-        File testScanFolder = new File("/Users/maiev/Documents/iisi/IISI_MavenPluginSQL/codeSpace/sql-deploy/target/test-classes/ForScan");
-        File testDeployFolder = new File("/Users/maiev/Documents/iisi/IISI_MavenPluginSQL/codeSpace/sql-deploy/target/test-classes/ForDeploy");
         Map<String, List<String>> allSqls = sqlFileProcessor.getAllSqls(testScanFolder.listFiles());
         Assert.assertNotNull(allSqls);
 
