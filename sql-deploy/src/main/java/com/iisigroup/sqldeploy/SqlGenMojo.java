@@ -16,8 +16,6 @@ import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Goal which create deploy SQL file.
@@ -70,7 +68,7 @@ public class SqlGenMojo extends AbstractMojo {
 
     public void execute() throws MojoExecutionException {
         SqlServerConfig dbConfg = new SqlServerConfig(host, port, userName, password);
-        SqlFileProcessor fileProcessor = new SqlFileProcessor(fileFormat, dbConfg);
+        SqlFileProcessor fileProcessor = new SqlFileProcessor(fileFormat, dbConfg, scanFolder, deployFolder);
         List<SQL> sqlList = new ArrayList<>();
         if(deployFolder != null && !deployFolder.exists()) {
             deployFolder.mkdirs();
