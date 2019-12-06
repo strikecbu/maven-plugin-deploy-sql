@@ -46,7 +46,7 @@ public class CommentRuleByMark implements CommentRule {
                 boolean isPass = StringUtil.checkStringMatchRegexs(comment, regexs);
                 if (!isPass) {
                     String correctFormat = "--@update:on/off|--@pk:primaryKey";
-                    errorMessages.add(String.format("第%d行:%s格式錯誤,正確格式為:%s",
+                    errorMessages.add(String.format("LineNo:%d wrong format: %s, the correct format is %s",
                             line, comment, correctFormat
                     ));
                 }
@@ -70,12 +70,12 @@ public class CommentRuleByMark implements CommentRule {
             } else if (comment.matches("--@\\s*upsert\\s*:\\s*off")) {
                 upsertOffCount++;
                 if (upsertOnCount < upsertOffCount) {
-                    errorMessages.add(String.format("第%d行:uppsert:off之前要先宣告upsert:on", line));
+                    errorMessages.add(String.format("LineNo:%d: Before uppsert:off, you MUST declare upsert:on keyword", line));
                 }
             }
         }
         if (upsertOnCount > 0 && !isPkDeclare) {
-            errorMessages.add("如果有宣告upsert,應該要在開頭先宣告=>pk:primaryKey");
+            errorMessages.add("If declare upsert, you MUST declare =>pk:primaryKey in the head");
         }
         return errorMessages;
     }

@@ -340,6 +340,12 @@ public class SqlFileProcessor {
 
     private void writeFile(File deployFile, String content, String charset) throws IOException {
         if (deployFile.exists()) {
+            //避免Jenkins流程重複跑，造成第二次檔案判斷失準，短期內重複跑的檔案不覆蓋
+            long nowTime = System.currentTimeMillis();
+            long fileModifyTime = deployFile.lastModified();
+            final int bufferMins = 3;
+            if(nowTime - fileModifyTime < (bufferMins * 60 * 1000))
+                return;
             deployFile.delete();
         } else {
             deployFile.createNewFile();
