@@ -53,7 +53,7 @@ public class ProdSqlGenMojoTest {
 
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd");
         String todayStr = dateFormat.format(new Date());
-        File touch = new File(deployFolder, "DeployUAT"+todayStr+".sql");
+        File touch = new File(deployFolder, "DeployPROD"+todayStr+".sql");
         assertTrue("deploy file not exist", touch.exists());
 
     }

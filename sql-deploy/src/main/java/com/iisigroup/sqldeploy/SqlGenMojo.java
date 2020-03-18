@@ -5,6 +5,7 @@ import com.iisigroup.sqldeploy.model.SQL;
 import com.iisigroup.sqldeploy.util.ProjectSqlFileUtil;
 import com.iisigroup.sqldeploy.util.SqlFileProcessor;
 import com.java.sqlconverter.model.SqlServerConfig;
+import org.apache.commons.io.FileUtils;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
@@ -27,7 +28,7 @@ public class SqlGenMojo extends AbstractMojo {
      * Location of scan folder
      */
     @Parameter(property = "scanFolder", required = true)
-    private File scanFolder;
+    private File[] scanFolder;
 
     /**
      * Location of place deploy sql folder
@@ -68,19 +69,41 @@ public class SqlGenMojo extends AbstractMojo {
 
     public void execute() throws MojoExecutionException {
         SqlServerConfig dbConfg = new SqlServerConfig(host, port, userName, password);
-        SqlFileProcessor fileProcessor = new SqlFileProcessor(fileFormat, dbConfg, scanFolder, deployFolder);
+
+        //支援多資料夾傳入，將檔案先copy到temp folder
+        // TODO 目前不支援同檔名辨識，會被覆蓋！ 會影響到deployTable file正確性。
+        final File temp = FileUtils.getTempDirectory();
+        final File tempDirectory = new File(temp, UUID.randomUUID().toString());
+        tempDirectory.mkdirs();
+        System.out.println("==== All folder list files ====");
+        for (File folder : scanFolder) {
+            if(folder == null || !folder.isDirectory() || deployFolder == null || !deployFolder.isDirectory()) {
+                throw new MojoExecutionException("make sure scanFolder and deployFolder is correct!");
+            }
+            System.out.println("Folder: " + folder.getName());
+            final List<File> list = Arrays.asList(Objects.requireNonNull(folder.listFiles()));
+            System.out.println("Files: ");
+            for (File file : Objects.requireNonNull(folder.listFiles())) {
+                System.out.println(file.getAbsolutePath());
+                try {
+                    FileUtils.copyFileToDirectory(file, tempDirectory);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        System.out.println("==== ==================== ====");
+
+        SqlFileProcessor fileProcessor = new SqlFileProcessor(fileFormat, dbConfg, tempDirectory, deployFolder);
         List<SQL> sqlList = new ArrayList<>();
         if(deployFolder != null && !deployFolder.exists()) {
             deployFolder.mkdirs();
-        }
-        if(scanFolder == null || !scanFolder.isDirectory() || deployFolder == null || !deployFolder.isDirectory()) {
-            throw new MojoExecutionException("make sure scanFolder and deployFolder is correct!");
         }
 
         //SQL string to Model
         System.out.println("Ready to scan SQL file...");
         try {
-            Map<String, List<String>> allSqls = fileProcessor.getAllSqls(scanFolder.listFiles());
+            Map<String, List<String>> allSqls = fileProcessor.getAllSqls(Objects.requireNonNull(tempDirectory.listFiles()));
             Set<String> keys = allSqls.keySet();
             for (String key : keys) {
                 SQL sql = fileProcessor.convertStrToModel(key, allSqls.get(key));
