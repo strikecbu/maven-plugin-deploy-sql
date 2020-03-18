@@ -6,7 +6,7 @@
 
   <groupId>com.iisigroup.sqldeploy</groupId>
   <artifactId>sql-deploy</artifactId>
-  <version>1.0.1</version>
+  <version>1.4.02</version>
   <packaging>jar</packaging>
   <name>Test MyMojo</name>
 
@@ -24,10 +24,11 @@
       <plugin>
         <groupId>com.iisigroup.sqldeploy</groupId>
         <artifactId>sql-deploy</artifactId>
+        <version>1.4.02</version>
         <configuration>
           <!-- Specify the MyMojo parameter -->
-          <deployFolder>../ForDeploy</deployFolder>
-          <scanFolder>../ForScan</scanFolder>
+          <deployFolder>../../ForDeploy</deployFolder>
+          <scanFolder>../../ForScan,../../ForScan2</scanFolder>
         </configuration>
       </plugin>
     </plugins>
