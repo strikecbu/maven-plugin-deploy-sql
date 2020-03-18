@@ -86,7 +86,11 @@ public class SqlGenMojo extends AbstractMojo {
             for (File file : Objects.requireNonNull(folder.listFiles())) {
                 System.out.println(file.getAbsolutePath());
                 try {
-                    FileUtils.copyFileToDirectory(file, tempDirectory);
+                    if (!file.isDirectory()) { // folder no need to copy
+                        FileUtils.copyFileToDirectory(file, tempDirectory);
+                    } else {
+                        System.out.println(file.getName() + " is a folder, skip it.");
+                    }
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
