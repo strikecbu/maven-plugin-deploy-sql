@@ -4,15 +4,20 @@ package com.iisigroup.sqldeploy;
 import com.iisigroup.sqldeploy.model.SQL;
 import com.iisigroup.sqldeploy.util.ProdSqlFileProcessor;
 import com.iisigroup.sqldeploy.util.ProjectSqlFileUtil;
+import org.apache.commons.io.FileUtils;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 
 import java.io.File;
+import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Random;
 
 /**
  * Goal which create deploy SQL file.
@@ -24,7 +29,7 @@ public class ProdSqlGenMojo extends AbstractMojo {
      * Location of scan folder
      */
     @Parameter(property = "scanUatFolder", required = true)
-    private File scanUatFolder;
+    private File[] scanUatFolders;
 
     /**
      * Location of place deploy sql folder
@@ -51,15 +56,30 @@ public class ProdSqlGenMojo extends AbstractMojo {
     @Parameter(defaultValue = "UTF-8", property = "inputCharset")
     private String inputCharset;
 
+    public ProdSqlGenMojo() {
+    }
+
+    public ProdSqlGenMojo(File[] scanUatFolders, File deployProdFolder, String fileFormat, String scanDate,
+                          boolean initCreate, String outputCharset, String inputCharset) {
+        this.scanUatFolders = scanUatFolders;
+        this.deployProdFolder = deployProdFolder;
+        this.fileFormat = fileFormat;
+        this.scanDate = scanDate;
+        this.initCreate = initCreate;
+        this.outputCharset = outputCharset;
+        this.inputCharset = inputCharset;
+    }
 
     public void execute() throws MojoExecutionException {
         List<SQL> sqlList = new ArrayList<>();
-        if(scanUatFolder == null || deployProdFolder == null) {
+        if(scanUatFolders == null || deployProdFolder == null) {
             throw new MojoExecutionException("make sure scanUatFolder and deployProdFolder have values!");
         }
-        System.out.println("scanUatFolder: " + scanUatFolder.getAbsolutePath());
-        if(!scanUatFolder.isDirectory()) {
-            throw new MojoExecutionException("make sure scanUatFolder is correct folder!");
+        for (File scanUatFolder : scanUatFolders) {
+            System.out.println("scanUatFolder: " + scanUatFolder.getAbsolutePath());
+            if(!scanUatFolder.isDirectory()) {
+                throw new MojoExecutionException("make sure scanUatFolder is correct folder!");
+            }
         }
         System.out.println("deployProdFolder: " + deployProdFolder.getAbsolutePath());
         if(!deployProdFolder.exists() || !deployProdFolder.isDirectory()) {
@@ -82,14 +102,29 @@ public class ProdSqlGenMojo extends AbstractMojo {
         }
 
         // 取得指定日期之後的SQL file
-        StringBuilder allSqls = ProdSqlFileProcessor.getAllSql(dateFormat.format(deploySqlDate), scanUatFolder.getAbsolutePath(), inputCharset);
+        File tempDirectory = FileUtils.getTempDirectory();
+        File temp = new File(tempDirectory, String.valueOf(new Random().nextInt(9999)));
+        for (File scanUatFolder : scanUatFolders) {
+            for (File file : scanUatFolder.listFiles()) {
+                try {
+                    FileUtils.copyFileToDirectory(file, temp, true);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        StringBuilder allSqls = ProdSqlFileProcessor.getAllSql(dateFormat.format(deploySqlDate), temp.getAbsolutePath(), inputCharset);
+
+        // diff SQL get update script
+        allSqls.append(ProdSqlFileProcessor.getDiffSqlContent(deploySqlDate, temp));
 
         //產生deploy SQL
         System.out.println("Ready to create deploy Prod SQL...");
         String fileName = fileFormat.replace("{yyyyMMdd}", dateFormat.format(new Date()));
         File createFile = new File(deployProdFolder, fileName);
         ProdSqlFileProcessor.writeFile(allSqls, createFile, outputCharset);
-
-        System.out.println("create deploy Prod SQL done!");
+        System.out.println("Prod SQL info: " + createFile.getAbsolutePath());
+        System.out.println("Create deploy Prod SQL done!");
     }
+
 }

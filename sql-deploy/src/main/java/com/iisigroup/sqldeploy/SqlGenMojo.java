@@ -119,10 +119,10 @@ public class SqlGenMojo extends AbstractMojo {
         //SQL string to Model
         System.out.println("Ready to scan SQL file...");
         try {
-            Map<String, List<String>> allSqls = fileProcessor.getAllSqls(Objects.requireNonNull(tempDirectory.listFiles()));
+            Map<String, List<String>> allSqls = SqlFileProcessor.getAllSqls(Objects.requireNonNull(tempDirectory.listFiles()));
             Set<String> keys = allSqls.keySet();
             for (String key : keys) {
-                SQL sql = fileProcessor.convertStrToModel(key, allSqls.get(key));
+                SQL sql = SqlFileProcessor.convertStrToModel(key, allSqls.get(key));
                 sqlList.add(sql);
             }
         } catch (IOException e) {

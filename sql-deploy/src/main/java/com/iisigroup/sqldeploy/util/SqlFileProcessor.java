@@ -36,13 +36,13 @@ public class SqlFileProcessor {
     public static Map<String, StringBuffer> skipSqls = new HashMap<>();
 
     private String deployFileFormat;
-    private SqlServerConfig dbConfig;
+    private static SqlServerConfig dbConfig;
 
     private InitailSqlService initailSqlService;
 
     public SqlFileProcessor(String deployFileFormat, SqlServerConfig dbConfig, File scanFolder, File deployFolder) {
         this.deployFileFormat = deployFileFormat;
-        this.dbConfig = dbConfig;
+        SqlFileProcessor.dbConfig = dbConfig;
         this.initailSqlService = new InitailSqlServiceImpl(scanFolder, deployFolder);
     }
 
@@ -52,12 +52,12 @@ public class SqlFileProcessor {
      * @return 以fileName為key，all content add in list
      * @throws IOException
      */
-    public Map<String, List<String>> getAllSqls(File[] allFiles) throws IOException {
+    public static Map<String, List<String>> getAllSqls(File[] allFiles) throws IOException {
         Map<String, List<String>> result = new HashMap<>();
 
         for (File file : allFiles) {
             //排除非sql檔
-            if(!this.checkSqlFile(file)) {
+            if(!checkSqlFile(file)) {
                 System.out.println("skip " + file.getName());
                 continue;
             }
@@ -85,7 +85,7 @@ public class SqlFileProcessor {
         return result;
     }
 
-    private boolean checkSqlFile(File file) {
+    private static boolean checkSqlFile(File file) {
         String name = file.getName();
         return name.matches(".*\\.sql$");
     }
@@ -96,7 +96,7 @@ public class SqlFileProcessor {
      * @param allSqls this sql inside all content
      * @return model of this sql
      */
-    public SQL convertStrToModel(String sqlName, List<String> allSqls) {
+    public static SQL convertStrToModel(String sqlName, List<String> allSqls) {
         SQL sql = new SQL();
         sql.setSqlFileName(sqlName);
         sql.setWeight(SQL.Weight.NORMAL);
@@ -107,7 +107,7 @@ public class SqlFileProcessor {
         for (int i = 0; i < allSqls.size(); i++) {
             String line = allSqls.get(i);
             if (line.contains(KEY)) {
-                SQL.Type sqlType = this.getSqlType(line);
+                SQL.Type sqlType = getSqlType(line);
                 if (sqlType != null) {
                     sql.setType(sqlType);
                 }
@@ -130,12 +130,12 @@ public class SqlFileProcessor {
             throw new IllegalStateException("SQL: " + sqlName + " not found init keyword");
         if(updateIndex == 0)
             throw new IllegalStateException("SQL: " + sqlName + " not found update keyword");
-        sql.setInitSql(this.getTargetSql(allSqls, initIndex + 1, updateIndex));
-        sql.setUpdateSql(this.getUpdateSql(sqlName, allSqls, updateIndex +1));
+        sql.setInitSql(getTargetSql(allSqls, initIndex + 1, updateIndex));
+        sql.setUpdateSql(getUpdateSql(sqlName, allSqls, updateIndex +1));
         return sql;
     }
 
-    private void checkUpdateContent(String sqlFileName, Map<Date, StringBuilder> updateSqls, Date dayAfter) {
+    private static void checkUpdateContent(String sqlFileName, Map<Date, StringBuilder> updateSqls, Date dayAfter) {
         System.out.println("Start checking update content...");
         System.out.println("The SQL file name: " + sqlFileName);
         System.out.println("The day after: " + dayAfter);
@@ -157,7 +157,7 @@ public class SqlFileProcessor {
      * @param sqlFileName sql file name
      * @param updateSqls all update SQL scripts
      */
-    private void checkUpdateContent(String sqlFileName, Map<Date, StringBuilder> updateSqls) {
+    private static void checkUpdateContent(String sqlFileName, Map<Date, StringBuilder> updateSqls) {
         StringBuffer allSqls = new StringBuffer();
         for (StringBuilder value : updateSqls.values()) {
             boolean isSkipOn = false;
@@ -192,7 +192,7 @@ public class SqlFileProcessor {
             skipSqls.put(sqlFileName, allSqls);
     }
 
-    private void checkInsertFormat(String sqlStr) {
+    private static void checkInsertFormat(String sqlStr) {
         String[] lines = sqlStr.split(System.lineSeparator());
         boolean isUpdertOn = false;
         for (String line : lines) {
@@ -220,8 +220,8 @@ public class SqlFileProcessor {
 
     }
 
-    private SQL.Type getSqlType(String line) {
-        String orderStr = this.getOrder(line);
+    private static SQL.Type getSqlType(String line) {
+        String orderStr = getOrder(line);
         for (SQL.Type type : SQL.Type.values()) {
             if (type.toString().equals(orderStr)) {
                 return type;
@@ -230,7 +230,7 @@ public class SqlFileProcessor {
         return null;
     }
 
-    private StringBuilder getTargetSql(List<String> allSqls, int start, int end) {
+    private static StringBuilder getTargetSql(List<String> allSqls, int start, int end) {
         if(end == 0)
             end = allSqls.size();
         StringBuilder result = new StringBuilder();
@@ -248,7 +248,7 @@ public class SqlFileProcessor {
      * @param start update keyword start index
      * @return update date is key, update sql in content
      */
-    private Map<Date, StringBuilder> getUpdateSql(String sqlName, List<String> allSqls, int start) {
+    private static Map<Date, StringBuilder> getUpdateSql(String sqlName, List<String> allSqls, int start) {
         TreeMap<Date, StringBuilder> result = new TreeMap<>();
         int startIndex = 0;
         Date date = null;
@@ -257,14 +257,14 @@ public class SqlFileProcessor {
             if(line.contains(KEY)) {
 
                 if (startIndex > 0) {
-                    StringBuilder targetSql = this.getTargetSql(allSqls, startIndex, i);
+                    StringBuilder targetSql = getTargetSql(allSqls, startIndex, i);
                     result.put(date, targetSql);
                     startIndex = i;
                 } else {
                     startIndex = i;
                 }
 
-                String dateStr = this.getOrder(line);
+                String dateStr = getOrder(line);
                 SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy,MM,dd");
                 try {
                     date = simpleDateFormat.parse(dateStr);
@@ -274,7 +274,7 @@ public class SqlFileProcessor {
             }
 
             if( startIndex > 0 && i == allSqls.size() -1) {
-                StringBuilder targetSql = this.getTargetSql(allSqls, startIndex, allSqls.size());
+                StringBuilder targetSql = getTargetSql(allSqls, startIndex, allSqls.size());
                 result.put(date, targetSql);
             }
         }
@@ -282,7 +282,7 @@ public class SqlFileProcessor {
         return result;
     }
 
-    private String getOrder(String line) {
+    private static String getOrder(String line) {
         return line.replace(KEY, "").trim();
     }
 
@@ -374,7 +374,7 @@ public class SqlFileProcessor {
 
     }
 
-    private StringBuilder getWriteContent(List<SQL> allSqls, Date dayAfter) {
+    public static StringBuilder getWriteContent(List<SQL> allSqls, Date dayAfter) {
         StringBuilder content = new StringBuilder();
         AtomicBoolean anyUpdate = new AtomicBoolean(false);
         allSqls.stream()
@@ -403,7 +403,7 @@ public class SqlFileProcessor {
                                         map1.put(entry.getKey(), entry.getValue());
                                     }, LinkedHashMap::putAll);
                     System.out.println("Total update date count: " + collect.size());
-                    StringBuilder targetDateSql = this.getTargetDateSql(collect, dayAfter);
+                    StringBuilder targetDateSql = getTargetDateSql(collect, dayAfter);
                     boolean isThisFileUpdate = false;
                     if (!"".equals(targetDateSql.toString())) {
                         anyUpdate.set(true);
@@ -427,7 +427,7 @@ public class SqlFileProcessor {
         }
     }
 
-    private StringBuilder getTargetDateSql(Map<Date, StringBuilder> allUpdates, Date dayAfter) {
+    private static StringBuilder getTargetDateSql(Map<Date, StringBuilder> allUpdates, Date dayAfter) {
         StringBuilder result = new StringBuilder();
         Set<Date> allDates = allUpdates.keySet();
         for (Date date : allDates) {
@@ -464,7 +464,7 @@ public class SqlFileProcessor {
      * remove all delete SQL contents in --@upsert area
      * @param sql
      */
-    private void removeInsertDelete(SQL sql) {
+    private static void removeInsertDelete(SQL sql) {
         Map<Date, StringBuilder> updateSql = sql.getUpdateSql();
         for (Date dateKey : updateSql.keySet()) {
             boolean isUpdertOn = false;
