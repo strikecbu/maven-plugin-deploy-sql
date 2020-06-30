@@ -66,6 +66,18 @@ public class SqlGenMojo extends AbstractMojo {
     @Parameter(property = "password")
     private String password;
 
+    public SqlGenMojo() {
+    }
+
+    public SqlGenMojo(File[] scanFolder, File deployFolder, String fileFormat, String scanDate, boolean initCreate,
+                      String outputCharset) {
+        this.scanFolder = scanFolder;
+        this.deployFolder = deployFolder;
+        this.fileFormat = fileFormat;
+        this.scanDate = scanDate;
+        this.initCreate = initCreate;
+        this.outputCharset = outputCharset;
+    }
 
     public void execute() throws MojoExecutionException {
         SqlServerConfig dbConfg = new SqlServerConfig(host, port, userName, password);

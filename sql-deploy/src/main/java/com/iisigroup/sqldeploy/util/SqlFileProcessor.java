@@ -11,6 +11,7 @@ import java.io.*;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author AndyChen
@@ -98,6 +99,9 @@ public class SqlFileProcessor {
     public SQL convertStrToModel(String sqlName, List<String> allSqls) {
         SQL sql = new SQL();
         sql.setSqlFileName(sqlName);
+        sql.setWeight(SQL.Weight.NORMAL);
+        if(sqlName.toLowerCase().contains("_diff.sql"))
+            sql.setWeight(SQL.Weight.LOW);
         int initIndex = 0;
         int updateIndex = 0;
         for (int i = 0; i < allSqls.size(); i++) {
@@ -145,7 +149,6 @@ public class SqlFileProcessor {
         }
         System.out.println("Put all these update SQL dates: " + tests.keySet());
         checkUpdateContent(sqlFileName, tests);
-        System.out.println("Start checking update is done.");
     }
 
     /**
@@ -309,6 +312,13 @@ public class SqlFileProcessor {
             //加入警告訊息
             writeContent.insert(0, addWarningMsg().toString());
             this.writeFile(deployFile, writeContent.toString(), charset);
+            ArrayList<String> collect = allSqls.stream()
+                    .filter(SQL::isHasUpdate)
+                    .collect(ArrayList::new, (list, sql) -> {
+                        list.add(sql.getSqlFileName());
+                    }, ArrayList::addAll);
+            System.out.println("Update SQL file included: " + collect);
+            System.out.println("Deploy file info: " + deployFile.getAbsolutePath());
             System.out.println("create deploy SQL was completed!");
         } else {
             System.out.println("there is no any deploy SQL, nothing to create.");
@@ -366,28 +376,51 @@ public class SqlFileProcessor {
 
     private StringBuilder getWriteContent(List<SQL> allSqls, Date dayAfter) {
         StringBuilder content = new StringBuilder();
-        boolean anyUpdate = false;
-        for (SQL sql : allSqls) {
-            Map<Date, StringBuilder> allUpdates = sql.getUpdateSql();
-            String sqlFileName = sql.getSqlFileName();
-            //移除--@upsert內的delete內容
-            removeInsertDelete(sql);
-            //TODO validate SQL UPDATE 內容
-            checkUpdateContent(sqlFileName, allUpdates, dayAfter);
-            content.append("--").append(sqlFileName).append(BREAK_LINE);
-            StringBuilder targetDateSql = this.getTargetDateSql(allUpdates, dayAfter);
-            if(!"".equals(targetDateSql.toString()))
-                anyUpdate = true;
+        AtomicBoolean anyUpdate = new AtomicBoolean(false);
+        allSqls.stream()
+                .sorted((a, b) -> -1 * (a.getWeight().getWeight() - b.getWeight().getWeight()))
+                .forEach(sql -> {
+                    Map<Date, StringBuilder> allUpdates = sql.getUpdateSql();
+                    final String sqlFileName = sql.getSqlFileName();
+                    //移除--@upsert內的delete內容
+                    removeInsertDelete(sql);
+                    //TODO validate SQL UPDATE 內容
+                    checkUpdateContent(sqlFileName, allUpdates, dayAfter);
+                    content.append("--").append(sqlFileName).append(BREAK_LINE);
+                    LinkedHashMap<Date, StringBuilder> collect = allUpdates.entrySet().stream()
+                            .filter(entry -> {
+                                boolean isIncluded = entry.getKey().getTime() > dayAfter.getTime();
+                                if(isIncluded)
+                                    System.out.println(sqlFileName + " update date included: " + entry.getKey());
+                                return isIncluded;
+                            })
+                            .sorted((e1, e2) -> {
+                                long l = e1.getKey().getTime() - e2.getKey().getTime();
+                                return l == 0 ? 0 : (l > 0 ? 1 : -1);
+                            })
+                            .collect(LinkedHashMap::new,
+                                    (map1, entry) -> {
+                                        map1.put(entry.getKey(), entry.getValue());
+                                    }, LinkedHashMap::putAll);
+                    System.out.println("Total update date count: " + collect.size());
+                    StringBuilder targetDateSql = this.getTargetDateSql(collect, dayAfter);
+                    boolean isThisFileUpdate = false;
+                    if (!"".equals(targetDateSql.toString())) {
+                        anyUpdate.set(true);
+                        isThisFileUpdate = true;
+                        sql.setHasUpdate(true);
+                    }
 
-            // 轉換insert SQL to upsert SQL
-            if(sql.getPrimaryKey() != null) {
-                targetDateSql.insert(0, PK_KEY + sql.getPrimaryKey() + BREAK_LINE);
-            }
-            String convertInsertSql = SqlCoverter.convertInsertSql(targetDateSql.toString());
-            content.append(convertInsertSql).append(BREAK_LINE);
-            content.append(SQL_SERVER_COMMIT_KEY).append(BREAK_LINE);
-        }
-        if(anyUpdate) {
+                    // 轉換insert SQL to upsert SQL
+                    if (sql.getPrimaryKey() != null) {
+                        targetDateSql.insert(0, PK_KEY + sql.getPrimaryKey() + BREAK_LINE);
+                    }
+                    String convertInsertSql = SqlCoverter.convertInsertSql(targetDateSql.toString());
+                    content.append(convertInsertSql).append(BREAK_LINE);
+                    if(isThisFileUpdate)
+                        content.append(SQL_SERVER_COMMIT_KEY).append(BREAK_LINE);
+                });
+        if(anyUpdate.get()) {
             return content;
         } else {
             return new StringBuilder();
