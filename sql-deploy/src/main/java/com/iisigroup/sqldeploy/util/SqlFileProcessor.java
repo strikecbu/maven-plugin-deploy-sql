@@ -412,10 +412,7 @@ public class SqlFileProcessor {
                     }
 
                     // 轉換insert SQL to upsert SQL
-                    if (sql.getPrimaryKey() != null) {
-                        targetDateSql.insert(0, PK_KEY + sql.getPrimaryKey() + BREAK_LINE);
-                    }
-                    String convertInsertSql = SqlCoverter.convertInsertSql(targetDateSql.toString());
+                    String convertInsertSql = convertInsertToUpsert(sql, targetDateSql.toString()).toString();
                     content.append(convertInsertSql).append(BREAK_LINE);
                     if(isThisFileUpdate)
                         content.append(SQL_SERVER_COMMIT_KEY).append(BREAK_LINE);
@@ -425,6 +422,33 @@ public class SqlFileProcessor {
         } else {
             return new StringBuilder();
         }
+    }
+
+    private static StringBuffer convertInsertToUpsert(SQL sql, String data) {
+        final String SPLIT_MARK = "go --go";
+        final String UPSERT_ON = "--@upsert:on";
+        final String UPSERT_OFF = "--@upsert:off";
+        if(!data.contains(UPSERT_ON))
+            return new StringBuffer(data);
+        StringBuffer result = Arrays.stream(data.split(SPLIT_MARK))
+                .reduce(new StringBuffer(), (collect, str) -> {
+                    StringBuilder sb = new StringBuilder(str);
+                    if (sql.getPrimaryKey() != null) {
+                        if(!str.contains(UPSERT_ON)) {
+                            sb.insert(0, UPSERT_ON + BREAK_LINE);
+                        }
+                        sb.insert(0, PK_KEY + sql.getPrimaryKey() + BREAK_LINE);
+                        if(!str.contains(UPSERT_OFF)) {
+                            sb.append(UPSERT_OFF + BREAK_LINE);
+                        }
+                    }
+                    String convertInsertSql = SqlCoverter.convertInsertSql(sb.toString());
+                    collect.append(convertInsertSql).append(BREAK_LINE);
+                    collect.append(SPLIT_MARK).append(BREAK_LINE);
+                    return collect;
+                }, StringBuffer::append);
+
+        return result;
     }
 
     private static StringBuilder getTargetDateSql(Map<Date, StringBuilder> allUpdates, Date dayAfter) {
