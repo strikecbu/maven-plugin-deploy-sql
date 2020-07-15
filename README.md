@@ -1,4 +1,8 @@
 # maven-plugin-deploy-sql
+This plugin help you auto gen SQL script by date, that you don't have to concern which script should give or not.
+
+Also, transform insert script to upsert script. make that script can re-run again and again. 
+
 ## How to USE
 1. Install the plugin use maven:
 ```

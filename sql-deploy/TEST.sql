@@ -22,6 +22,7 @@ INSERT INTO TEST (parmId, parmValue, parmDesc, updater, updateTime) VALUES (N'TE
 -- // update script don't require --@upsert section
 UPDATE TEST SET parmValue = '123' WHERE parmId = 'TEST';
 
+-- // such as delete and drop script, you have to keep it in the skip section
 --@skip:on
 DELETE TABLE TEST;
 --@skip:off
