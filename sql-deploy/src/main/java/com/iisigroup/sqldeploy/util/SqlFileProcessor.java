@@ -294,7 +294,7 @@ public class SqlFileProcessor {
      * @param charset 指定的file encode
      * @throws IOException
      */
-    public void createUpdateSql(List<SQL> allSqls, Date dayAfter, File folder, String charset) throws IOException {
+    public File createUpdateSql(List<SQL> allSqls, Date dayAfter, File folder, String charset) throws IOException {
         StringBuilder writeContent = this.getWriteContent(allSqls, dayAfter);
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd");
         String todayStr = dateFormat.format(new Date());
@@ -323,6 +323,7 @@ public class SqlFileProcessor {
         } else {
             System.out.println("there is no any deploy SQL, nothing to create.");
         }
+        return deployFile;
     }
 
     private void addUpdateTitle(StringBuilder writeContent) {

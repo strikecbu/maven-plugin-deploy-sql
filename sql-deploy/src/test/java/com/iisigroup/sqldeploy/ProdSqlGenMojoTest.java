@@ -66,7 +66,9 @@ public class ProdSqlGenMojoTest {
         File forSacan2 = new File("target/test-classes/ForProdScan");
         File forDeploy = new File("target/test-classes/ForProdDeploy");
         String charset = StandardCharsets.UTF_8.toString();
-        ProdSqlGenMojo mojo = new ProdSqlGenMojo(new File[]{forSacan1, forSacan2}, forDeploy, "DeployPROD{yyyyMMdd}.sql", null, false, charset, charset);
+        File forChangeDeploy = new File("target/test-classes/ForChangeDeploy");
+        String forChangeDeployName = "changes.sql";
+        ProdSqlGenMojo mojo = new ProdSqlGenMojo(new File[]{forSacan1, forSacan2}, forDeploy, "DeployPROD{yyyyMMdd}.sql", null, false, charset, charset,forChangeDeploy, forChangeDeployName);
         mojo.execute();
     }
 

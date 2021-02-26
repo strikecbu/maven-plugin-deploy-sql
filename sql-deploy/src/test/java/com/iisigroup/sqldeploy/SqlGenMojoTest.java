@@ -67,9 +67,11 @@ public class SqlGenMojoTest {
         File forSacan1 = new File("target/test-classes/ForScan");
         File forSacan2 = new File("target/test-classes/ForScan2");
         File forDeploy = new File("target/test-classes/ForDeploy");
+        File forChangeDeploy = new File("target/test-classes/ForChangeDeploy");
+        String forChangeDeployName = "changes.sql";
         File forProdDeploy = new File("target/test-classes/ForProdDeploy");
         String scanDate = "20200630";
-        SqlGenMojo mojo = new SqlGenMojo(new File[]{forSacan1, forSacan2}, forDeploy, "Deploy{yyyyMMdd}.sql", null, false, "UTF-8");
+        SqlGenMojo mojo = new SqlGenMojo(new File[]{forSacan1, forSacan2}, forDeploy, forChangeDeploy, forChangeDeployName, "Deploy{yyyyMMdd}.sql", null, false, "UTF-8");
         mojo.execute();
     }
 

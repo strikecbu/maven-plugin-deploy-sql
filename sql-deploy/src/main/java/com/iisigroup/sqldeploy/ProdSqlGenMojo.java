@@ -56,11 +56,21 @@ public class ProdSqlGenMojo extends AbstractMojo {
     @Parameter(defaultValue = "UTF-8", property = "inputCharset")
     private String inputCharset;
 
+    /**
+     * Location of place deploy citi sql folder
+     */
+    @Parameter(property = "changeSqlFolder")
+    private File changeSqlFolder;
+
+    @Parameter(property = "changeSqlName")
+    private String changeSqlName;
+
     public ProdSqlGenMojo() {
     }
 
     public ProdSqlGenMojo(File[] scanUatFolders, File deployProdFolder, String fileFormat, String scanDate,
-                          boolean initCreate, String outputCharset, String inputCharset) {
+                          boolean initCreate, String outputCharset, String inputCharset, File changeSqlFolder,
+                          String changeSqlName) {
         this.scanUatFolders = scanUatFolders;
         this.deployProdFolder = deployProdFolder;
         this.fileFormat = fileFormat;
@@ -68,6 +78,8 @@ public class ProdSqlGenMojo extends AbstractMojo {
         this.initCreate = initCreate;
         this.outputCharset = outputCharset;
         this.inputCharset = inputCharset;
+        this.changeSqlFolder = changeSqlFolder;
+        this.changeSqlName = changeSqlName;
     }
 
     public void execute() throws MojoExecutionException {
@@ -123,6 +135,17 @@ public class ProdSqlGenMojo extends AbstractMojo {
         String fileName = fileFormat.replace("{yyyyMMdd}", dateFormat.format(new Date()));
         File createFile = new File(deployProdFolder, fileName);
         ProdSqlFileProcessor.writeFile(allSqls, createFile, outputCharset);
+
+        //將產出的SQL複製改名到changes.sql
+        if (changeSqlFolder != null && changeSqlName != null) {
+            final File changeSqlFile = new File(changeSqlFolder, changeSqlName);
+            try {
+
+                FileUtils.copyFile(createFile, changeSqlFile, false);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
         System.out.println("Prod SQL info: " + createFile.getAbsolutePath());
         System.out.println("Create deploy Prod SQL done!");
     }

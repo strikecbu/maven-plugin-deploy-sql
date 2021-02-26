@@ -37,6 +37,15 @@ public class SqlGenMojo extends AbstractMojo {
     private File deployFolder;
 
     /**
+     * Location of place deploy citi sql folder
+     */
+    @Parameter(property = "changeSqlFolder")
+    private File changeSqlFolder;
+
+    @Parameter(property = "changeSqlName")
+    private String changeSqlName;
+
+    /**
      * 產出Deploy SQL 檔名format，會替換掉{yyyyMMdd}變成今日日期
      * ex: DeployUAT{yyyyMMdd}.sql -> DeployUAT20180828.sql
      */
@@ -53,7 +62,7 @@ public class SqlGenMojo extends AbstractMojo {
     private String outputCharset;
 
 
-    // SQL server connection config
+//    // SQL server connection config
     @Parameter(property = "host")
     private String host;
 
@@ -69,10 +78,12 @@ public class SqlGenMojo extends AbstractMojo {
     public SqlGenMojo() {
     }
 
-    public SqlGenMojo(File[] scanFolder, File deployFolder, String fileFormat, String scanDate, boolean initCreate,
-                      String outputCharset) {
+    public SqlGenMojo(File[] scanFolder, File deployFolder, File changeSqlFolder, String changeSqlName,
+                      String fileFormat, String scanDate, boolean initCreate, String outputCharset) {
         this.scanFolder = scanFolder;
         this.deployFolder = deployFolder;
+        this.changeSqlFolder = changeSqlFolder;
+        this.changeSqlName = changeSqlName;
         this.fileFormat = fileFormat;
         this.scanDate = scanDate;
         this.initCreate = initCreate;
@@ -155,8 +166,14 @@ public class SqlGenMojo extends AbstractMojo {
 
         //產生deploy SQL
         System.out.println("Ready to create deploy SQL...");
+        File updateSql = null;
         try {
-            fileProcessor.createUpdateSql(sqlList, deploySqlDate, deployFolder, outputCharset);
+            updateSql = fileProcessor.createUpdateSql(sqlList, deploySqlDate, deployFolder, outputCharset);
+            //將產出的SQL複製改名到changes.sql
+            if (changeSqlFolder != null && changeSqlName != null) {
+                final File changeSqlFile = new File(changeSqlFolder, changeSqlName);
+                FileUtils.copyFile(updateSql, changeSqlFile, false);
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
